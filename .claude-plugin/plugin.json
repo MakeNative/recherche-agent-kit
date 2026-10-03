@@ -1,0 +1,9 @@
+{
+  "name": "recherche-kit",
+  "description": "Agenten-Pipeline für belegte Langdokumente. Baut eine kategorisierte Quellenbibliothek mit Autoritätsstufen, prüft Drittquellen gegen die offizielle Doku auf Frische, schreibt Kapitel ausschließlich aus belegten Aussagen, sichert über Quellen-, Verständnis- und Lückengates ab und rendert Buch, PDF und Präsentation aus einem Quellstand. Themenneutral — Inhalt, Bibliothek und Stilvertrag liegen im Dokumentprojekt.",
+  "version": "0.1.0",
+  "author": {
+    "name": "ceichmueller"
+  },
+  "license": "MIT"
+}

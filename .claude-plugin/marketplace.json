@@ -1,0 +1,13 @@
+{
+  "name": "recherche-agent-kit",
+  "description": "Marketplace für das recherche-kit Plugin: Agenten-Pipeline für belegte Langdokumente.",
+  "owner": { "name": "ceichmueller" },
+  "plugins": [
+    {
+      "name": "recherche-kit",
+      "source": "./",
+      "description": "Agenten-Pipeline für belegte Langdokumente: Quellenbibliothek aufbauen, auf Frische prüfen, Kapitel aus belegten Aussagen schreiben, über Gates absichern, als Buch und Präsentation rendern.",
+      "author": { "name": "ceichmueller" }
+    }
+  ]
+}
