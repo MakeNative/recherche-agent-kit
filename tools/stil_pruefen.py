@@ -65,7 +65,10 @@ def glossarbegriffe(w: Path) -> set[str]:
         return set()
     text = pfad.read_text(encoding="utf-8", errors="replace")
     begriffe = set()
-    for m in re.finditer(r"^\s*(?:[-*]\s*)?\*\*(.+?)\*\*", text, re.M):
+    # Fettbegriffe überall erkennen — auch in Tabellenzellen, deren Zeile mit
+    # `|` beginnt. Die frühere Variante verlangte Zeilenanfang und übersah
+    # dadurch jedes Glossar in Tabellenform.
+    for m in re.finditer(r"\*\*(.+?)\*\*", text):
         begriffe.add(m.group(1).strip().lower())
     for m in re.finditer(r"^\s*\|\s*([^|]{2,40}?)\s*\|", text, re.M):
         t = m.group(1).strip().lower()
