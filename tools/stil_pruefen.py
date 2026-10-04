@@ -77,8 +77,11 @@ def glossarbegriffe(w: Path) -> set[str]:
     for m in re.finditer(r"^#{2,6}\s+(.+)$", text, re.M):
         begriffe.add(m.group(1).strip().lower())
     # Aliasse in Klammern mitnehmen: **Subagent** (engl. subagent, Agent)
-    for m in re.finditer(r"\(([^)]{2,80})\)", text):
-        for teil in re.split(r"[,;/]", m.group(1)):
+    # Klammerlisten können lang werden (Sammeleinträge mit vielen Aliassen),
+    # und Aliasse dürfen Schrägstriche tragen (.git/, .claude/settings.json) —
+    # deshalb Grenze 200 und Trennung nur an Komma/Semikolon.
+    for m in re.finditer(r"\(([^)]{2,200})\)", text):
+        for teil in re.split(r"[,;]", m.group(1)):
             teil = re.sub(r"^(engl\.|dt\.|auch|früher|veraltet)\s*", "", teil.strip(), flags=re.I)
             if 2 <= len(teil) <= 40:
                 begriffe.add(teil.strip().lower())
