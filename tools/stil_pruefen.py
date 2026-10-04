@@ -79,8 +79,8 @@ def glossarbegriffe(w: Path) -> set[str]:
     # Aliasse in Klammern mitnehmen: **Subagent** (engl. subagent, Agent)
     # Klammerlisten können lang werden (Sammeleinträge mit vielen Aliassen),
     # und Aliasse dürfen Schrägstriche tragen (.git/, .claude/settings.json) —
-    # deshalb Grenze 200 und Trennung nur an Komma/Semikolon.
-    for m in re.finditer(r"\(([^)]{2,200})\)", text):
+    # deshalb Grenze 400 und Trennung nur an Komma/Semikolon.
+    for m in re.finditer(r"\(([^)]{2,400})\)", text):
         for teil in re.split(r"[,;]", m.group(1)):
             teil = re.sub(r"^(engl\.|dt\.|auch|früher|veraltet)\s*", "", teil.strip(), flags=re.I)
             if 2 <= len(teil) <= 40:
