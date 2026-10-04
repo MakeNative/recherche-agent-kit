@@ -26,6 +26,16 @@ from pathlib import Path
 
 TIER1_PFLICHT = ("funktion", "zahl")
 TOT = ("ueberholt", "widersprochen")
+# Q-01-Verdacht: funktionsförmige Aussage (Backticks, Pfad, Dateiname, Flag)
+# aus Stufe 2–5, als `urteil`/`erfahrung` etikettiert. Das typ-Feld setzt
+# dieselbe Instanz, die schreibt — darum prüft der Hook die Form der Aussage,
+# nicht nur das Etikett. Entschärfen: `q01_ok: true` + `q01_grund`.
+Q01_VERDACHT = re.compile(
+    r"`[^`\n]+`"
+    r"|(?<![\w.])\.?\w[\w.-]*/[\w./-]+"
+    r"|\b[\w-]+\.(?:md|mdc|json|toml|yaml|yml|txt|py|qmd)\b"
+    r"|(?<!\w)--\w"
+)
 
 
 def spur(w: Path, **felder):
@@ -114,6 +124,17 @@ def claims_pruefen(text: str, qidx: dict[str, dict]) -> list[str]:
                 f"{cid}: typ `{c['typ']}` verlangt eine Quelle der Stufe 1, "
                 f"{qid} ist Stufe {q.get('tier')} (Q-01). "
                 f"Entweder einen Stufe-1-Beleg suchen oder `status` auf `offen` setzen."
+            )
+        elif (
+            int(q.get("tier", 9)) != 1
+            and not c.get("q01_ok")
+            and isinstance(c.get("aussage"), str)
+            and Q01_VERDACHT.search(c["aussage"])
+        ):
+            verstoesse.append(
+                f"{cid}: funktionsförmige Aussage aus Stufe {q.get('tier')}, deklariert als "
+                f"`{c.get('typ')}` (Q-01-Verdacht). Stufe-1-Beleg suchen, oder nach Prüfung "
+                f"`q01_ok: true` mit `q01_grund` setzen."
             )
     return verstoesse
 

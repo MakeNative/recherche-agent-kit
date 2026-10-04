@@ -170,15 +170,64 @@ def pruefen(datei: Path, s: dict, begriffe: set[str]) -> list[dict]:
                 k = begriff.strip().lower()
                 if k in begriffe or k in gemeldet or len(k) < 2:
                     continue
+                # Datei- und Pfadnamen sind Namen, keine Fachbegriffe — sie
+                # gehören nicht ins Glossar. Vorher mussten Agenten diesen
+                # Fehlalarm per Backtick-Streichen umspielen.
+                if "/" in k or re.fullmatch(r"[\w.-]+\.[a-z0-9]{1,5}", k):
+                    continue
                 gemeldet.add(k)
                 befund("S-03", nr, f"Fachbegriff „{begriff}\" steht nicht im Glossar")
     return b
+
+
+def wiederholung_pruefen(w: Path, befunde: list[dict], dateien: list[Path]) -> list[str]:
+    """Meldet eine Datei dasselbe Befundbild zum wiederholten Mal, ist das der
+    Verdachtsmoment für einen Werkzeugfehler — nicht für mehr Reparatur.
+    Die Regel stand bisher nur als Prosa in der Skill `gates` und wurde in
+    einem Lauf 19-mal übergangen; jetzt misst das Werkzeug sie selbst."""
+    zustand_pfad = w / "gates" / ".stil-vorlauf.json"
+    try:
+        zustand = json.loads(zustand_pfad.read_text(encoding="utf-8"))
+    except Exception:
+        zustand = {}
+
+    je_datei: dict[str, dict[str, int]] = {}
+    for x in befunde:
+        name = x["ort"].split(":")[0]
+        je_datei.setdefault(name, {})
+        je_datei[name][x["regel"]] = je_datei[name].get(x["regel"], 0) + 1
+
+    warnungen = []
+    for d in dateien:
+        name = d.name
+        nach_regel = je_datei.get(name)
+        if not nach_regel:
+            zustand.pop(name, None)  # Datei ist sauber — Zähler weg
+            continue
+        alt = zustand.get(name, {})
+        if alt.get("nach_regel") == nach_regel:
+            n = alt.get("wiederholungen", 1) + 1
+            zustand[name] = {"nach_regel": nach_regel, "wiederholungen": n}
+            warnungen.append(
+                f"VERDACHT WERKZEUGFEHLER: {name} meldet zum {n}. Mal identisch "
+                f"{nach_regel} — prüfe zuerst die Prüfung, dann den Text."
+            )
+        else:
+            zustand[name] = {"nach_regel": nach_regel, "wiederholungen": 1}
+
+    try:
+        zustand_pfad.parent.mkdir(parents=True, exist_ok=True)
+        zustand_pfad.write_text(json.dumps(zustand, ensure_ascii=False, indent=1), encoding="utf-8")
+    except Exception:
+        pass
+    return warnungen
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("dateien", nargs="*")
     ap.add_argument("--still", action="store_true", help="nur Exitcode, keine Ausgabe")
+    ap.add_argument("--ausloeser", default=None, help="hook | lauf — fürs Protokoll")
     a = ap.parse_args()
 
     w = g.wurzel()
@@ -219,6 +268,8 @@ def main():
         z += ["Kein Befund.", ""]
     g.bericht_schreiben(w, "stil-report.md", "\n".join(z))
 
+    warnungen = wiederholung_pruefen(w, befunde, dateien)
+
     nach_regel: dict[str, int] = {}
     for x in befunde:
         nach_regel[x["regel"]] = nach_regel.get(x["regel"], 0) + 1
@@ -230,7 +281,8 @@ def main():
         zeichen=zeichen,
         befunde=len(befunde),
         nach_regel=nach_regel,
-        ausloeser="hook" if a.still else "lauf",
+        ausloeser=a.ausloeser or ("still" if a.still else "lauf"),
+        **({"werkzeugfehler_verdacht": len(warnungen)} if warnungen else {}),
     )
 
     if not a.still:
@@ -239,6 +291,8 @@ def main():
             print(f"  {x['regel']}  {x['ort']}  {x['text'][:90]}")
         if len(befunde) > 15:
             print(f"  … {len(befunde) - 15} weitere im Bericht")
+        for ww in warnungen:
+            print(f"  ⚠ {ww}")
     raise SystemExit(1 if befunde else 0)
 
 

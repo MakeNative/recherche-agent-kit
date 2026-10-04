@@ -51,7 +51,7 @@ def main():
 
     try:
         lauf = subprocess.run(
-            [sys.executable, str(WERKZEUG), str(pfad)],
+            [sys.executable, str(WERKZEUG), str(pfad), "--ausloeser", "hook"],
             cwd=w, capture_output=True, text=True, timeout=25,
         )
     except Exception:

@@ -31,7 +31,21 @@ import gemeinsam as g  # noqa: E402
 
 PFLICHT = ("claim_id", "aussage", "typ", "quelle", "chunk_id", "zitat", "status", "stand")
 FUSSNOTE = re.compile(r"\[\^([A-Za-z0-9][\w-]*)\]")
-ZAHL = re.compile(r"(?<![\w.])\d[\d.,]*\s*(%|Prozent|Mio|Mrd|€|\$|USD|EUR|Token|Sterne|Seiten|MB|KB|GB|x|mal)\b|(?<![\w.])\d{2,}(?![\w.])")
+# Q-01 hängt am typ-Feld, und das setzt dieselbe Instanz, die die Aussage
+# schreibt. Falsch etikettiert (`urteil` statt `funktion`) läuft eine
+# Funktionsaussage aus Stufe 2–5 sonst ungeprüft durch — die einzige Tür.
+# Verdächtig ist eine Aussage, die konkrete Artefakte benennt: Backticks,
+# Pfade, Dateinamen, Flags. Entschärfen geht nur ausdrücklich: `q01_ok: true`
+# plus `q01_grund` nach Prüfung durch die Skill.
+Q01_VERDACHT = re.compile(
+    r"`[^`\n]+`"                       # Backtick-Ausdruck
+    r"|(?<![\w.])\.?\w[\w.-]*/[\w./-]+"  # Pfad mit Schrägstrich
+    r"|\b[\w-]+\.(?:md|mdc|json|toml|yaml|yml|txt|py|qmd)\b"  # Dateiname
+    r"|(?<!\w)--\w"                    # Kommandozeilen-Flag
+)
+# Kennungen wie A-09, D-04, CVE-2025-32711 oder v2.1.277 sind Namen, keine
+# Zahlenaussagen — Ziffern direkt nach Bindestrich zählen nicht.
+ZAHL = re.compile(r"(?<![-\w.])\d[\d.,]*\s*(%|Prozent|Mio|Mrd|€|\$|USD|EUR|Token|Sterne|Seiten|MB|KB|GB|x|mal)\b|(?<![-\w.])\d{2,}(?![\w.])")
 SATZ_ENDE = re.compile(r"(?<=[.!?])\s+")
 
 
@@ -83,6 +97,16 @@ def claims_pruefen(w: Path, dateien: list[Path]) -> list[dict]:
                 befund(
                     "Q-01", kapitel, cid,
                     f"typ `{c['typ']}` verlangt Stufe 1, {q['id']} ist Stufe {q.get('tier')}",
+                )
+            elif (
+                int(q.get("tier", 9)) != 1
+                and not c.get("q01_ok")
+                and Q01_VERDACHT.search(c["aussage"])
+            ):
+                befund(
+                    "Q-01", kapitel, cid,
+                    f"funktionsförmige Aussage aus Stufe {q.get('tier')}, deklariert als "
+                    f"`{c['typ']}` — prüfen; wenn haltbar, `q01_ok: true` mit `q01_grund` setzen",
                 )
             if not q.get("abgerufen"):
                 befund("Q-05", kapitel, cid, f"Quelle {q['id']} ohne Abrufdatum")
@@ -147,7 +171,7 @@ def kapitel_pruefen(w: Path) -> list[dict]:
             if zeile.lstrip().startswith(("```", "~~~")):
                 im_zaun = not im_zaun
                 continue
-            if im_zaun or zeile.lstrip().startswith(("|", ">", "#")):
+            if im_zaun or zeile.lstrip().startswith(("|", ">", "#", "<!--")):
                 continue
             for satz in SATZ_ENDE.split(zeile):
                 if ZAHL.search(satz) and not FUSSNOTE.search(satz):
@@ -222,7 +246,7 @@ def main():
     g.spur(
         w, "gate",
         werkzeug="claims_pruefen",
-        kapitel=a.kapitel or "alle",
+        kapitel=a.kapitel or ["alle"],
         kapiteltext=a.kapitel_text,
         geprueft=anzahl,
         befunde=len(befunde),
