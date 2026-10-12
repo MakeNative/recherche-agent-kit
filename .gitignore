@@ -5,11 +5,11 @@ __pycache__/
 # Niemals Dokumentinhalte ins Plugin-Repo.
 # Bibliothek, Claims, Kapitel, Stilvertrag und Renders liegen im jeweiligen
 # Dokumentprojekt und gehören dort in dessen .gitignore.
-wissen/
-claims/
-kapitel/
-gates/
-_book/
-_slides/
+/wissen/
+/claims/
+/kapitel/
+/gates/
+/_book/
+/_slides/
 STILVERTRAG.md
 REQUIREMENTS.md
