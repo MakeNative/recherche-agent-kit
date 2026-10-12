@@ -27,8 +27,8 @@ sind. Beides lässt sich nicht durch Prompts lösen, sondern nur durch Mechanik:
 
 ```bash
 claude
-> /plugin marketplace add ~/StudioProjects/recherche-agent-kit
-> /plugin install recherche-kit
+> /plugin marketplace add MakeNative/recherche-agent-kit
+> /plugin install recherche-kit@recherche-agent-kit
 ```
 
 Python 3 wird gebraucht, sonst nichts — die Werkzeuge nutzen nur die
