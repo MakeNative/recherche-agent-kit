@@ -121,3 +121,14 @@ Drittquelle, eine überholte Quelle, eine Zahl ohne Fußnote.
 ## Lizenz
 
 MIT.
+
+## MakeNative
+
+Dieses Kit ist Teil von [MakeNative](https://makenative.de). Wir arbeiten jeden Tag mit
+Agenten-Pipelines wie dieser und bringen anderen bei, sie für ihre eigenen Prozesse zu
+bauen. Für Entwickler genauso wie für alle, die ihre Arbeit mit KI automatisieren wollen.
+
+Du willst das für deine Arbeit lernen? Trag dich in die Liste ein:
+[Bewerbung Starter-Kohorte](https://tally.so/r/5ByYj6?utm_source=github&utm_medium=readme&utm_campaign=starter-kohorte)
+
+Christian Eichmüller · [LinkedIn](https://linkedin.com/in/christianeichmueller)
